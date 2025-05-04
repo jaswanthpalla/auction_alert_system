@@ -37,7 +37,7 @@ jobs:
     - name: Run scraper
       run: python scrape_auctions.py
 
-    - name: Debug directory contents
+    - name: Debug directory contents before rename
       run: |
         ls -la auction_exports/
         find auction_exports/ -type f
@@ -51,11 +51,19 @@ jobs:
           fi
         done
 
+    - name: Debug directory contents after rename
+      run: |
+        ls -la auction_exports/
+        find auction_exports/ -type f
+
     - name: Commit and push downloaded Excel file
       run: |
         git config --global user.name 'GitHub Action'
         git config --global user.email 'action@github.com'
-        git add auction_exports/*.xls auction_exports/*.xlsx
+        # Add .xls files if they exist
+        ls auction_exports/*.xls >/dev/null 2>&1 && git add auction_exports/*.xls || echo "No .xls files to add"
+        # Add .xlsx files if they exist
+        ls auction_exports/*.xlsx >/dev/null 2>&1 && git add auction_exports/*.xlsx || echo "No .xlsx files to add"
         git commit -m "Update auction Excel file for $(date +%Y-%m-%d)" || echo "No changes to commit"
         git push
       env:
