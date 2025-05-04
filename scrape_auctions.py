@@ -24,6 +24,7 @@ def setup_chrome_options():
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--window-size=1920,1080")
+    chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36")
     chrome_options.add_experimental_option('prefs', {
         "download.default_directory": os.path.abspath(DOWNLOAD_DIR),
         "download.prompt_for_download": False,
@@ -52,13 +53,13 @@ def scrape_auctions():
         logger.info("EXPORT button clicked!")
         
         # Wait for file to download
-        timeout = 60  # Increased for reliability
+        timeout = 60
         start_time = time.time()
         downloaded_file = None
         while time.time() - start_time < timeout:
             excel_files = glob.glob(os.path.join(DOWNLOAD_DIR, "*.xlsx"))
             if excel_files:
-                downloaded_file = excel_files[0]  # Take the first Excel file
+                downloaded_file = excel_files[0]
                 break
             time.sleep(1)
         
@@ -80,3 +81,4 @@ def scrape_auctions():
 
 if __name__ == "__main__":
     scrape_auctions()
+    
