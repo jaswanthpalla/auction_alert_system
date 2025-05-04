@@ -59,8 +59,8 @@ def scrape_auctions():
         start_time = time.time()
         downloaded_file = None
         while time.time() - start_time < timeout:
-            # Check for .xls and .xlsx files
-            excel_files = glob.glob(os.path.join(DOWNLOAD_DIR, "*.xls")) + glob.glob(os.path.join(DOWNLOAD_DIR, "*.xlsx"))
+            # Check for .xls files only
+            excel_files = glob.glob(os.path.join(DOWNLOAD_DIR, "*.xls"))
             partial_files = glob.glob(os.path.join(DOWNLOAD_DIR, "*.crdownload"))
             logger.info("Files in directory: %s", os.listdir(DOWNLOAD_DIR))
             logger.info("Excel files found: %s", excel_files)
