@@ -29,7 +29,8 @@ def setup_chrome_options():
         "download.default_directory": os.path.abspath(DOWNLOAD_DIR),
         "download.prompt_for_download": False,
         "download.directory_upgrade": True,
-        "plugins.always_open_pdf_externally": True
+        "plugins.always_open_pdf_externally": True,
+        "safebrowsing.enabled": True
     })
     return chrome_options
 
@@ -39,6 +40,7 @@ def scrape_auctions():
     try:
         # Setup Chrome driver
         chrome_options = setup_chrome_options()
+        logger.info("Download directory set to: %s", os.path.abspath(DOWNLOAD_DIR))
         driver = webdriver.Chrome(options=chrome_options)
         
         # Open IBBI auction site
@@ -53,11 +55,16 @@ def scrape_auctions():
         logger.info("EXPORT button clicked!")
         
         # Wait for file to download
-        timeout = 60
+        timeout = 120
         start_time = time.time()
         downloaded_file = None
         while time.time() - start_time < timeout:
-            excel_files = glob.glob(os.path.join(DOWNLOAD_DIR, "*.xlsx"))
+            # Check for .xls and .xlsx files
+            excel_files = glob.glob(os.path.join(DOWNLOAD_DIR, "*.xls")) + glob.glob(os.path.join(DOWNLOAD_DIR, "*.xlsx"))
+            partial_files = glob.glob(os.path.join(DOWNLOAD_DIR, "*.crdownload"))
+            logger.info("Files in directory: %s", os.listdir(DOWNLOAD_DIR))
+            logger.info("Excel files found: %s", excel_files)
+            logger.info("Partial downloads: %s", partial_files)
             if excel_files:
                 downloaded_file = excel_files[0]
                 break
@@ -81,4 +88,3 @@ def scrape_auctions():
 
 if __name__ == "__main__":
     scrape_auctions()
-    
