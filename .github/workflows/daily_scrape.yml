@@ -23,6 +23,10 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y chromium-browser
         sudo apt-get install -y chromium-chromedriver
+        # Check if chromedriver link exists and remove if necessary
+        if [ -f /usr/bin/chromedriver ]; then
+          sudo rm /usr/bin/chromedriver
+        fi
         sudo ln -s /usr/lib/chromium-browser/chromedriver /usr/bin/chromedriver
 
     - name: Install dependencies
