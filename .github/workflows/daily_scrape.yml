@@ -2,7 +2,7 @@ name: Daily Auction Scrape
 
 on:
   schedule:
-    - cron: '0 3 * * *'  # Runs daily at 03:00 UTC, which is 8:30 AM IST (+5:30 offset)
+    - cron: '30 3 * * *'  # Runs daily at 03:30 UTC, which is 9:00 AM IST (+5:30 offset)
   workflow_dispatch:  # Allows manual trigger
 
 jobs:
