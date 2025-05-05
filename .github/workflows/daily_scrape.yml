@@ -2,7 +2,7 @@ name: Daily Auction Scrape
 
 on:
   schedule:
-    - cron: '30 0 * * *'   # runs everyday at 6:00 AM Inida
+    - cron: '30 0 * * *'   # runs everyday at 6:00 AM India (00:30 UTC)
   workflow_dispatch:  # Allows manual trigger
 
 jobs:
@@ -25,7 +25,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y chromium-browser
           sudo apt-get install -y chromium-chromedriver
-          # Check if chromedriver link exists and remove if necessary
           if [ -f /usr/bin/chromedriver ]; then
             sudo rm /usr/bin/chromedriver
           fi
@@ -58,13 +57,21 @@ jobs:
           ls -la auction_exports/
           find auction_exports/ -type f
 
-      - name: Commit and push downloaded Excel file
+      - name: Process auction data
+        run: python process_auctions.py
+
+      - name: Debug directory contents after processing
+        run: |
+          ls -la auction_exports/
+          find auction_exports/ -type f
+
+      - name: Commit and push files
         run: |
           git config --global user.name 'GitHub Action'
           git config --global user.email 'action@github.com'
-          # Add .xls files if they exist
           ls auction_exports/*.xls >/dev/null 2>&1 && git add auction_exports/*.xls || echo "No .xls files to add"
-          git commit -m "Update auction Excel file for $(date +%Y-%m-%d)" || echo "No changes to commit"
+          ls auction_exports/*.csv >/dev/null 2>&1 && git add auction_exports/*.csv || echo "No .csv files to add"
+          git commit -m "Update auction files for $(date +%Y-%m-%d)" || echo "No changes to commit"
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
