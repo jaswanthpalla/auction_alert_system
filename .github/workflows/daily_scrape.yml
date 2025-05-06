@@ -2,7 +2,7 @@ name: Daily Auction Scrape
 
 on:
   schedule:
-    - cron: '30 0 * * *'    # runs everyday at 6:00 AM India (00:30 UTC)
+    - cron: '30 0 * * *'   # runs everyday at 6:00 AM India (00:30 UTC)
   workflow_dispatch:  # Allows manual trigger
 
 jobs:
@@ -64,6 +64,13 @@ jobs:
         run: |
           ls -la auction_exports/
           find auction_exports/ -type f
+
+      - name: Send email alert
+        run: python email_alert.py
+        env:
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+          SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+          RECIPIENT_EMAILS: ${{ secrets.RECIPIENT_EMAILS }}
 
       - name: Commit and push files
         run: |
