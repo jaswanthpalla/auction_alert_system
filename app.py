@@ -10,7 +10,8 @@ csv_files = glob.glob("auction_exports/processed_auctions_*.csv")
 if not csv_files:
     st.error("No processed auction data found.")
 else:
-    latest_csv = max(csv_files, key=os.path.getctime)
+    # Sort files by the date in the filename (processed_auctions_YYYYMMDD.csv)
+    latest_csv = max(csv_files, key=lambda x: x.split('_')[-1].split('.')[0])
     st.write(f"Displaying data from: {latest_csv}")
 
     # Read the data
