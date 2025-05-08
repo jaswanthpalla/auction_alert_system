@@ -1,16 +1,17 @@
 import pandas as pd
 from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
+from sendgrid.helpers.mail import Mail, Attachment, FileContent, FileName, FileType, Disposition
 import glob
 import os
 import logging
+import base64
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 def send_email_alert(api_key, sender_email, recipient_emails, days_threshold=7):
-    """Send an email alert with upcoming auction deadlines to multiple recipients."""
+    """Send an email alert with upcoming auction deadlines as a CSV attachment."""
     try:
         # Validate inputs
         if not api_key or not sender_email or not recipient_emails:
@@ -35,9 +36,9 @@ def send_email_alert(api_key, sender_email, recipient_emails, days_threshold=7):
         latest_csv = max(csv_files, key=os.path.getctime)
         df = pd.read_csv(latest_csv)
 
-        # Filter for auctions with days_until_submission <= threshold
+        # Filter for auctions with 0 < days_until_submission <= threshold
         if 'days_until_submission' in df.columns:
-            upcoming_df = df[df['days_until_submission'] <= days_threshold]
+            upcoming_df = df[(df['days_until_submission'] >= 0) & (df['days_until_submission'] <= days_threshold)]
             upcoming_df = upcoming_df.sort_values(by='days_until_submission')
         else:
             logger.error("Column 'days_until_submission' not found in the data.")
@@ -46,19 +47,43 @@ def send_email_alert(api_key, sender_email, recipient_emails, days_threshold=7):
         # Create email content
         subject = "IBBI Auction Alerts - Upcoming Deadlines"
         if upcoming_df.empty:
-            body = "No auctions with submission deadlines within the next 7 days."
+            body = "No auctions with submission deadlines between 1 and 7 days. No CSV file attached."
+            attachment = None
         else:
-            body = "The following auctions have submission deadlines within the next 7 days:\n\n"
-            body += upcoming_df.to_string(index=False)
-            body += "\n\nTotal upcoming auctions: " + str(len(upcoming_df))
+            # Save the filtered dataframe to a temporary CSV file
+            temp_csv = "upcoming_auctions.csv"
+            upcoming_df.to_csv(temp_csv, index=False)
+
+            # Read and encode the CSV file for attachment
+            with open(temp_csv, 'rb') as f:
+                data = f.read()
+                encoded_file = base64.b64encode(data).decode()
+
+            # Create the attachment
+            attachment = Attachment(
+                FileContent(encoded_file),
+                FileName('upcoming_auctions.csv'),
+                FileType('text/csv'),
+                Disposition('attachment')
+            )
+
+            # Update email body
+            body = f"Attached is a CSV file containing {len(upcoming_df)} auctions with submission deadlines between 1 and 7 days."
+
+            # Clean up the temporary file
+            os.remove(temp_csv)
 
         # Set up the email
         message = Mail(
             from_email=sender_email,
-            to_emails=recipient_emails,  # SendGrid accepts a list of emails
+            to_emails=recipient_emails,
             subject=subject,
             plain_text_content=body
         )
+
+        # Attach the file if there are upcoming auctions
+        if attachment:
+            message.attachment = attachment
 
         # Send the email via SendGrid
         sg = SendGridAPIClient(api_key)
